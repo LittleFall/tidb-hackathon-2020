@@ -4,7 +4,7 @@ This is a template for TiDB's change proposal process, documented [here](./READM
 
 # Proposal: 基于 raft log 实现 TiDB 的物化视图
 
-- Author(s):     齐智，耿立琪，胡志峰，刘继聪<!-- Author Name, Co-Author Name, with the link(s) of the GitHub profile page -->
+- Authors:     齐智，耿立琪，胡志峰，刘继聪<!-- Author Name, Co-Author Name, with the link(s) of the GitHub profile page -->
 - Last updated:  2021.01.11<!-- Date -->
 - Discussion at: this repo.
 
