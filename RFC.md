@@ -117,7 +117,7 @@ A brief description on how the implementation will be tested. Both integration t
 
 ## Open issues (if applicable)
 
-N/A
+暂无。
 
 <!--
 A discussion of issues relating to this proposal for which the author does not know the solution. This section may be omitted if there are none.
