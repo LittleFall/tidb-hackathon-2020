@@ -26,10 +26,11 @@
 - 实现 learner
 - 实现 schema 相关的逻辑
 - 完成 tidb 的查询导引
+- 启动时做 snapshot
 
 项目结构侧
-- 整理 cmakelists，实现 include 尖括号
-- 添加一些基础支持，如日志，单元测试，format
+- 整理 cmake，实现 include 尖括号
+- 添加一些基础支持，如日志，单元测试，format，CI
 
 
 ## 实现原理

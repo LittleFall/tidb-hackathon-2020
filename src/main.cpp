@@ -5,11 +5,11 @@ void testTxnSolver()
 {
     TxnSolver txn_solver;
 
-    txn_solver.preWrite("k1", 1, "k1++");
+    txn_solver.prewrite("k1", 1, "k1++");
 
     txn_solver.commit("k1", 6);
 
-    txn_solver.preWrite("k2", 3, "k2--");
+    txn_solver.prewrite("k2", 3, "k2--");
 
     txn_solver.commit("k2", 7);
 }
