@@ -8,7 +8,9 @@
 
 语言指导：[Cpp reference](https://zh.cppreference.com/w/%E9%A6%96%E9%A1%B5)
 
-编码规范：[ClickHouse 编码建议](https://clickhouse.tech/docs/zh/development/style/)
+代码规范：[ClickHouse 编码建议](https://clickhouse.tech/docs/zh/development/style/)
+
+编码流程：在[主仓库](https://github.com/LittleFall/tidb-hackathon-2020)上创建 branch 或 fork，通过 pr 合并。勿直接提交到主分支（main）。 
 
 ## 项目结构
 
@@ -26,9 +28,9 @@
 - 完成 tidb 的查询导引
 
 项目结构侧
-- 添加单元测试
 - 整理 cmakelists，实现 include 尖括号
-- 添加一些基础库，如日志等
+- 添加一些基础支持，如日志，单元测试，format
+
 
 ## 实现原理
 
