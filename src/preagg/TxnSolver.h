@@ -33,4 +33,3 @@ private:
     std::priority_queue<Lock> lock_heap;
     std::unordered_map<Key, TimeStamp> commit_hashtable;
 };
-
