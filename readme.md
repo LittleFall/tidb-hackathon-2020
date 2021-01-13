@@ -10,7 +10,7 @@
 
 代码规范：[ClickHouse 编码建议](https://clickhouse.tech/docs/zh/development/style/)
 
-编码流程：在[主仓库](https://github.com/LittleFall/tidb-hackathon-2020)上创建 branch 或 fork，通过 pr 合并。勿直接提交到主分支（main）。 
+编码流程：在[主仓库](https://github.com/LittleFall/tidb-hackathon-2020)上创建 branch 或 fork，通过 pr 合并，至少需 1 人 review。请勿直接提交到主分支（main）。 
 
 ## 项目结构
 
