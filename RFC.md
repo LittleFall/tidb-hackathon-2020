@@ -41,7 +41,7 @@ An introduction of the necessary background and the problem being solved by the 
 
 通过实现类似于 TiFlash Proxy 的 raft learner，将导出的 raft log 进行预聚合等处理，以此来在 TiDB 获得中类似于物化视图的效果。
 
-这里的预聚合结果带有 schema，并且可以满足事务（多版本控制）以及最终一致性。
+这里的预聚合结果带有 schema，并且可以满足事务（多版本控制）以及强一致性。
 
 除了预聚合之外，还可以通过接入 Flink 等方式来实现更多的功能，如流式 Join。
 
