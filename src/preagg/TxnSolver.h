@@ -6,6 +6,7 @@
 #include <queue>
 #include <iostream>
 #include <unordered_map>
+#include <cassert>
 #include "../TobeImplement.cpp"
 
 class TxnSolver
