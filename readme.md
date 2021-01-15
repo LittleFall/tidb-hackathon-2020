@@ -21,12 +21,15 @@
 ## Todo queue
 
 产品侧
-- 实现 apply 逻辑，包括常用的聚合函数
-- 实现预聚合的多版本控制
-- 实现 learner
-- 实现 schema 相关的逻辑
-- 完成 tidb 的查询导引
+- 实现 apply 逻辑，包括常用的聚合函数（@qizhi）
+- 实现预聚合的多版本控制 （@qizhi）
+
+- 实现 learner （@小虎，@liqi）
+- 实现 schema 相关的逻辑（@小虎，@liqi）
 - 启动时做 snapshot
+
+- 完成 tidb 的查询导引（放在）
+
 
 项目结构侧
 - 整理 cmake，实现 include 尖括号
