@@ -14,9 +14,7 @@ class AggFunctionHandle {
 public:
 
     // Todo: use template parameter to get fast.
-    AggFunctionHandle() {
-
-    }
+    AggFunctionHandle() = default;
 
     void accumulate(Key input);
     void retract(Key input);
@@ -34,9 +32,9 @@ public:
     std::optional<double> getAvgDistinct();
 
 private:
-    Key sum; // Todo: 考虑溢出的情况
-    Key distinct_sum;
-    uint64_t count;
+    Key sum{}; // Todo: 考虑溢出的情况
+    Key distinct_sum{};
+    uint64_t count{};
 
     std::map<Key, uint64_t> values;
 };
