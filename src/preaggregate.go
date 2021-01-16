@@ -97,7 +97,8 @@ func NewPreAggregate(preaggMVCC *PreAggregateMVCC, handler *AggregateHandler) *P
 func (p *PreAggregate) rowChange(row *model.RowChangedEvent) {
 	// 算聚合答案
 	// 调用这个 interface
-	v := p.handler.OnRowChanged(row)
+	//v := p.handler.OnRowChanged(row)
+	var v Value
 
 	p.preaggMVCC.AddValue(&PreAggregateResult{
 		ts: row.CommitTs,

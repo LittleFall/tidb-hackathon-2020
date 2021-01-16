@@ -220,7 +220,7 @@ func newSaramaConfig() (*sarama.Config, error) {
 
 func main() {
 	log.Info("Starting a new TiCDC open protocol consumer")
-
+	fmt.Print("qwq")
 	/**
 	 * Construct a new Sarama configuration.
 	 * The Kafka cluster version has to be defined before the consumer/producer is initialized.
@@ -336,7 +336,7 @@ func NewConsumer(ctx context.Context) (*Consumer, error) {
 	conf := config.GetDefaultReplicaConfig()
 	conf.EnableOldValue = true
 	for i := 0; i < int(kafkaPartitionNum); i++ {
-		s, err := newPreAggSink(filter, conf)
+		s, err := newPreAggSink(filter, conf, &PreAggregate{})
 		if err != nil {
 			cancel()
 			return nil, errors.Trace(err)
@@ -346,7 +346,7 @@ func NewConsumer(ctx context.Context) (*Consumer, error) {
 			resolvedTs uint64
 		}{Sink: s}
 	}
-	sink, err := newPreAggSink(filter, conf)
+	sink, err := newPreAggSink(filter, conf, &PreAggregate{})
 	if err != nil {
 		cancel()
 		return nil, errors.Trace(err)
