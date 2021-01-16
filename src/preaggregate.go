@@ -120,19 +120,18 @@ type AggregateHandler interface {
 
 type PreAggregate struct {
 	preaggMVCC *PreAggregateMVCC
-	handler    *AggregateHandler
+	handler    AggregateHandler
 }
 
-func NewPreAggregate(preaggMVCC *PreAggregateMVCC, handlers *AggregateHandler) *PreAggregate {
+func NewPreAggregate(preaggMVCC *PreAggregateMVCC, handler AggregateHandler) *PreAggregate {
 	return &PreAggregate{
 		preaggMVCC,
-		handlers,
+		handler,
 	}
 }
 
 func (p *PreAggregate) rowChange(row *model.RowChangedEvent) {
-	// v := p.handler.OnRowChanged(row)
-	var v Value
+	v := p.handler.OnRowChanged(row)
 
 	p.preaggMVCC.AddValue(&PreAggregateResult{
 		ts: row.CommitTs,
