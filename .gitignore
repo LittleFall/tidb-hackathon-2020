@@ -1,3 +1,4 @@
 .idea/
 cmake-build-debug/
 cdc_kafka_consumer.log
+.vscode/
