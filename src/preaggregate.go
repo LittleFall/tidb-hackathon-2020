@@ -22,20 +22,32 @@ type PreAggregateMVCC struct {
 	mutex      sync.Mutex
 	results    *btree.BTree
 	resolvedTs uint64
+	chans      []struct {
+		ch chan *Value
+		ts uint64
+	}
 }
 
 func NewPreAggregateMVCC() *PreAggregateMVCC {
 	return &PreAggregateMVCC{
-		results: btree.New(2),
+		results:    btree.New(2),
+		resolvedTs: 0,
 	}
 }
 
-// Retry until success
-func (m *PreAggregateMVCC) FindValue(readTs uint64) *Value {
+func (m *PreAggregateMVCC) FindValue(readTs uint64) chan *Value {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
+	ch := make(chan *Value, 1)
 	if readTs > m.resolvedTs {
-		return nil
+		m.chans = append(m.chans, struct {
+			ch chan *Value
+			ts uint64
+		}{
+			ch,
+			readTs,
+		})
+		return ch
 	}
 	var v *Value
 	v = nil
@@ -51,7 +63,8 @@ func (m *PreAggregateMVCC) FindValue(readTs uint64) *Value {
 			return true
 		},
 	)
-	return v
+	ch <- v
+	return ch
 }
 
 func (m *PreAggregateMVCC) AddValue(result *PreAggregateResult) {
@@ -67,6 +80,9 @@ func (m *PreAggregateMVCC) AddValue(result *PreAggregateResult) {
 	if another != nil {
 		panic("commit ts same, result %v, crawl!")
 	}
+	if m.results.Len() > 10000 {
+		m.results.DeleteMin()
+	}
 }
 
 func (m *PreAggregateMVCC) UpdateResolveTs(resolvedTs uint64) {
@@ -76,6 +92,26 @@ func (m *PreAggregateMVCC) UpdateResolveTs(resolvedTs uint64) {
 		panic("resolve ts smaller, crawl!")
 	}
 	m.resolvedTs = resolvedTs
+	for _, s := range m.chans {
+		if m.resolvedTs < s.ts {
+			continue
+		}
+		var v *Value
+		v = nil
+		m.results.DescendLessOrEqual(&PreAggregateResult{
+			ts: s.ts,
+		},
+			func(a btree.Item) bool {
+				res := a.(*PreAggregateResult)
+				if res.ts < s.ts {
+					*v = res.v
+					return false
+				}
+				return true
+			},
+		)
+		s.ch <- v
+	}
 }
 
 type AggregateHandler interface {
@@ -87,17 +123,15 @@ type PreAggregate struct {
 	handler    *AggregateHandler
 }
 
-func NewPreAggregate(preaggMVCC *PreAggregateMVCC, handler *AggregateHandler) *PreAggregate {
+func NewPreAggregate(preaggMVCC *PreAggregateMVCC, handlers *AggregateHandler) *PreAggregate {
 	return &PreAggregate{
 		preaggMVCC,
-		handler,
+		handlers,
 	}
 }
 
 func (p *PreAggregate) rowChange(row *model.RowChangedEvent) {
-	// 算聚合答案
-	// 调用这个 interface
-	//v := p.handler.OnRowChanged(row)
+	// v := p.handler.OnRowChanged(row)
 	var v Value
 
 	p.preaggMVCC.AddValue(&PreAggregateResult{
