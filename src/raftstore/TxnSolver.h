@@ -9,10 +9,11 @@
 #include <cassert>
 #include "../TobeImplement.cpp"
 
+using TimeStamp = uint64_t;
+
 class TxnSolver
 {
     using Key = std::string;
-    using TimeStamp = uint64_t;
     using Event = std::string;
 
     struct Lock {
