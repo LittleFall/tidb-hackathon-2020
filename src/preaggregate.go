@@ -11,7 +11,7 @@ type Value int64
 
 type PreAggregateResult struct {
 	ts uint64
-	v  Value
+	vs  []Value
 }
 
 func (m *PreAggregateResult) Less(item btree.Item) bool {
@@ -112,7 +112,7 @@ func (m *PreAggregateMVCC) UpdateResolveTs(resolvedTs uint64) {
 }
 
 type AggregateHandler interface {
-	OnRowChanged(row *model.RowChangedEvent) Value
+	OnRowChanged(row *model.RowChangedEvent) []Value
 }
 
 type PreAggregate struct {
@@ -128,11 +128,11 @@ func NewPreAggregate(preaggMVCC *PreAggregateMVCC, handler AggregateHandler) *Pr
 }
 
 func (p *PreAggregate) rowChange(row *model.RowChangedEvent) {
-	v := p.handler.OnRowChanged(row)
+	vs := p.handler.OnRowChanged(row)
 
 	p.preaggMVCC.AddValue(&PreAggregateResult{
 		ts: row.CommitTs,
-		v:  v,
+		vs:  vs,
 	})
 }
 

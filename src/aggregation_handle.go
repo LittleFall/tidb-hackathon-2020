@@ -60,9 +60,16 @@ func (aggHandler *AggFuncHandler) retract(key Value) {
 	}
 }
 
-func (aggHandler *AggFuncHandler) getSum() Value {
-	return aggHandler.sum
-}
+func (aggHandler *AggFuncHandler) getSum() Value { return aggHandler.sum }
+func (aggHandler *AggFuncHandler) getCount() Value { return aggHandler.count}
+func (aggHandler *AggFuncHandler) getAvg() float64 { return float64(aggHandler.sum)/float64(aggHandler.count) }
+func (aggHandler *AggFuncHandler) getMin() Value { return aggHandler.tree.Min().(uint64_t).v }
+func (aggHandler *AggFuncHandler) getMax() Value { return aggHandler.tree.Max().(uint64_t).v }
+func (aggHandler *AggFuncHandler) getDistinctSum() Value {return aggHandler.distinctSum}
+func (aggHandler *AggFuncHandler) getDistinctCount() Value {return Value(len(aggHandler.occurs))}
+func (aggHandler *AggFuncHandler) getDistinctAvg() float64 { return float64(aggHandler.distinctSum)/float64(len(aggHandler.occurs)) }
+func (aggHandler *AggFuncHandler) getDistinctMin() Value { return aggHandler.tree.Min().(uint64_t).v }
+func (aggHandler *AggFuncHandler) getDistinctMax() Value { return aggHandler.tree.Max().(uint64_t).v }
 
 type MVHandler struct {
 	cols     []uint16
@@ -70,9 +77,11 @@ type MVHandler struct {
 	handlers []AggFuncHandler
 }
 
+
+// sum(a), max(b), distinct count(c)
 func newMVHandler() *MVHandler {
 	handler := &MVHandler{}
-	handler.createMVHandler([]uint16{0}, []uint16{0})
+	handler.createMVHandler([]uint16{0, 1, 2}, []uint16{0, 4, 6})
 	return handler
 }
 
@@ -89,11 +98,9 @@ func (mvHandler *MVHandler) createMVHandler(funs, cols []uint16) {
 	}
 }
 
-func (mvHandler *MVHandler) OnRowChanged(row *model.RowChangedEvent) Value {
+func (mvHandler *MVHandler) OnRowChanged(row *model.RowChangedEvent) []Value {
 	if row.PreColumns != nil {
-		//fmt.Printf("precolumn type = %v, value = %v, real type = %v\n", row.PreColumns[0].Type, row.PreColumns[0].Value, reflect.TypeOf(row.PreColumns[0].Value).String())
 		if t, ok := row.PreColumns[0].Value.(json.Number); ok {
-		//	fmt.Printf("will retract an value %v\n", t)
 			if i, err := t.Int64(); err == nil {
 				mvHandler.handlers[0].retract(Value(i))
 			}
@@ -102,16 +109,14 @@ func (mvHandler *MVHandler) OnRowChanged(row *model.RowChangedEvent) Value {
 		}
 	}
 	if row.Columns != nil {
-		//fmt.Printf("newcolumn type = %v, value = %v, real type = %v\n", row.Columns[0].Type, row.Columns[0].Value, reflect.TypeOf(row.Columns[0].Value).String())
 		if t, ok := row.Columns[0].Value.(json.Number); ok {
-			//fmt.Printf("will insert an value %v\n", t)
 			if i, err := t.Int64(); err == nil {
 				mvHandler.handlers[0].insert(Value(i))
 			}
 		} else {
-			//fmt.Println("not a json number, crawl!")
+			fmt.Println("not a json number, crawl!")
 		}
 	}
-	fmt.Printf("value in this time: %v\n",mvHandler.handlers[0].getSum())
-	return Value(mvHandler.handlers[0].getSum())
+	fmt.Printf("value in this time: %v\n", mvHandler.handlers[0].getSum())
+	return []Value{mvHandler.handlers[0].getSum()}
 }
