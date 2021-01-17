@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/google/btree"
 	"github.com/pingcap/ticdc/cdc/model"
 )
+
+
 
 const (
 	Sum   = iota // sum
@@ -20,22 +24,22 @@ const (
 )
 
 type AggFuncHandler struct {
-	sum         uint64
-	count       uint64
-	distinctSum uint64
-	occurs      map[uint64]uint64
-	tree        btree.BTree
+	sum         Value
+	count       Value
+	distinctSum Value
+	occurs      map[Value]Value
+	tree        *btree.BTree
 }
 
 type uint64_t struct {
-	v uint64
+	v Value
 }
 
 func (m uint64_t) Less(item btree.Item) bool {
 	return m.v < (item.(uint64_t).v)
 }
 
-func (aggHandler *AggFuncHandler) insert(key uint64) {
+func (aggHandler *AggFuncHandler) insert(key Value) {
 	aggHandler.sum += key
 	aggHandler.count++
 	aggHandler.occurs[key]++
@@ -45,7 +49,7 @@ func (aggHandler *AggFuncHandler) insert(key uint64) {
 	}
 }
 
-func (aggHandler *AggFuncHandler) retract(key uint64) {
+func (aggHandler *AggFuncHandler) retract(key Value) {
 	aggHandler.sum -= key
 	aggHandler.count--
 	aggHandler.occurs[key]--
@@ -56,7 +60,7 @@ func (aggHandler *AggFuncHandler) retract(key uint64) {
 	}
 }
 
-func (aggHandler *AggFuncHandler) getSum() uint64 {
+func (aggHandler *AggFuncHandler) getSum() Value {
 	return aggHandler.sum
 }
 
@@ -80,20 +84,34 @@ func (mvHandler *MVHandler) createMVHandler(funs, cols []uint16) {
 	copy(mvHandler.funs, funs)
 	mvHandler.handlers = make([]AggFuncHandler, len(cols))
 	for i := range mvHandler.handlers {
-		mvHandler.handlers[i].occurs = make(map[uint64]uint64)
+		mvHandler.handlers[i].occurs = make(map[Value]Value)
+		mvHandler.handlers[i].tree = btree.New(2)
 	}
 }
 
 func (mvHandler *MVHandler) OnRowChanged(row *model.RowChangedEvent) Value {
 	if row.PreColumns != nil {
-		if t, ok := row.PreColumns[0].Value.(uint64); ok {
-			mvHandler.handlers[0].retract(t)
+		//fmt.Printf("precolumn type = %v, value = %v, real type = %v\n", row.PreColumns[0].Type, row.PreColumns[0].Value, reflect.TypeOf(row.PreColumns[0].Value).String())
+		if t, ok := row.PreColumns[0].Value.(json.Number); ok {
+		//	fmt.Printf("will retract an value %v\n", t)
+			if i, err := t.Int64(); err == nil {
+				mvHandler.handlers[0].retract(Value(i))
+			}
+		} else {
+			fmt.Println("not a json number, crawl!")
 		}
 	}
 	if row.Columns != nil {
-		if t, ok := row.PreColumns[0].Value.(uint64); ok {
-			mvHandler.handlers[0].insert(t)
+		//fmt.Printf("newcolumn type = %v, value = %v, real type = %v\n", row.Columns[0].Type, row.Columns[0].Value, reflect.TypeOf(row.Columns[0].Value).String())
+		if t, ok := row.Columns[0].Value.(json.Number); ok {
+			//fmt.Printf("will insert an value %v\n", t)
+			if i, err := t.Int64(); err == nil {
+				mvHandler.handlers[0].insert(Value(i))
+			}
+		} else {
+			//fmt.Println("not a json number, crawl!")
 		}
 	}
+	fmt.Printf("value in this time: %v\n",mvHandler.handlers[0].getSum())
 	return Value(mvHandler.handlers[0].getSum())
 }

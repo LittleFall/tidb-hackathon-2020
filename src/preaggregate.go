@@ -7,7 +7,7 @@ import (
 	"github.com/pingcap/ticdc/cdc/model"
 )
 
-type Value uint64
+type Value int64
 
 type PreAggregateResult struct {
 	ts uint64
@@ -76,10 +76,7 @@ func (m *PreAggregateMVCC) AddValue(result *PreAggregateResult) {
 			panic("commit ts smaller, crawl!")
 		}
 	}
-	another := m.results.ReplaceOrInsert(result)
-	if another != nil {
-		panic("commit ts same, result %v, crawl!")
-	}
+	m.results.ReplaceOrInsert(result)
 	if m.results.Len() > 10000 {
 		m.results.DeleteMin()
 	}

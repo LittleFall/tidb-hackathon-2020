@@ -82,7 +82,10 @@ func (p *preAggSink) EmitRowChangedEvents(ctx context.Context, rows ...*model.Ro
 			log.Info("Row changed event ignored", zap.Uint64("start-ts", row.StartTs))
 			continue
 		}
-		heap.Push(&p.pq, row)
+		heap.Push(&p.pq, &Item{
+			row,
+			0,
+		})
 	}
 	return nil
 }

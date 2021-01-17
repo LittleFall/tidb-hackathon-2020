@@ -2,3 +2,5 @@
 cmake-build-debug/
 cdc_kafka_consumer.log
 .vscode/
+./src/v1
+./src/src
