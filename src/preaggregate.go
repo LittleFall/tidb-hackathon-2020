@@ -132,7 +132,7 @@ func (p *PreAggregate) rowChange(row *model.RowChangedEvent) {
 	vs := p.handler.OnRowChanged(row)
 	fmt.Printf("CommitTs: %v: ( ", row.CommitTs)
 	for _, v := range vs {
-		fmt.Printf("%d ", v)
+		fmt.Printf("%v ", v)
 	}
 	fmt.Printf(")\n")
 

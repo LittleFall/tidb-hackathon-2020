@@ -95,7 +95,7 @@ func newMVHandler() *MVHandler {
 	return handler
 }
 
-func (mvHandler *MVHandler) createMVHandler(funs, cols []uint16) {
+func (mvHandler *MVHandler) createMVHandler(cols, funs []uint16) {
 	if len(funs) != len(cols) {
 		panic("funs len != cols len, crawl")
 	}
@@ -117,8 +117,10 @@ func (mvHandler *MVHandler) OnRowChanged(row *model.RowChangedEvent) []Value {
 		}
 	}
 	for cid := range row.Columns {
+
 		if t, ok := row.Columns[cid].Value.(json.Number); ok {
 			if i, err := t.Int64(); err == nil {
+				//fmt.Printf("here cid %v, value %v\n", cid, i)
 				mvHandler.handlers[cid].insert(Value(i))
 			}
 		}
@@ -138,5 +140,5 @@ func (mvHandler *MVHandler) OnRowChanged(row *model.RowChangedEvent) []Value {
 	//	}
 	//}
 	//fmt.Printf("value in this time: %v\n", mvHandler.handlers[0].getSum())
-	return []Value{mvHandler.handlers[0].getSum(), mvHandler.handlers[1].getMax(), mvHandler.handlers[2].getDistinctCount()}
+	return []Value{mvHandler.handlers[2].getSum(), mvHandler.handlers[1].getMax(), mvHandler.handlers[0].getDistinctCount()}
 }
