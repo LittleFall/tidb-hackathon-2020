@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/google/btree"
 	"github.com/pingcap/ticdc/cdc/model"
 )
@@ -63,8 +62,20 @@ func (aggHandler *AggFuncHandler) retract(key Value) {
 func (aggHandler *AggFuncHandler) getSum() Value { return aggHandler.sum }
 func (aggHandler *AggFuncHandler) getCount() Value { return aggHandler.count}
 func (aggHandler *AggFuncHandler) getAvg() float64 { return float64(aggHandler.sum)/float64(aggHandler.count) }
-func (aggHandler *AggFuncHandler) getMin() Value { return aggHandler.tree.Min().(uint64_t).v }
-func (aggHandler *AggFuncHandler) getMax() Value { return aggHandler.tree.Max().(uint64_t).v }
+func (aggHandler *AggFuncHandler) getMin() Value {
+	if aggHandler.count>0 {
+		return aggHandler.tree.Min().(uint64_t).v
+	} else {
+		return Value(0)
+	}
+}
+func (aggHandler *AggFuncHandler) getMax() Value {
+	if aggHandler.count>0 {
+		return aggHandler.tree.Max().(uint64_t).v
+	} else {
+		return Value(0)
+	}
+}
 func (aggHandler *AggFuncHandler) getDistinctSum() Value {return aggHandler.distinctSum}
 func (aggHandler *AggFuncHandler) getDistinctCount() Value {return Value(len(aggHandler.occurs))}
 func (aggHandler *AggFuncHandler) getDistinctAvg() float64 { return float64(aggHandler.distinctSum)/float64(len(aggHandler.occurs)) }
@@ -76,7 +87,6 @@ type MVHandler struct {
 	funs     []uint16
 	handlers []AggFuncHandler
 }
-
 
 // sum(a), max(b), distinct count(c)
 func newMVHandler() *MVHandler {
@@ -99,24 +109,34 @@ func (mvHandler *MVHandler) createMVHandler(funs, cols []uint16) {
 }
 
 func (mvHandler *MVHandler) OnRowChanged(row *model.RowChangedEvent) []Value {
-	if row.PreColumns != nil {
-		if t, ok := row.PreColumns[0].Value.(json.Number); ok {
+	for cid := range row.PreColumns {
+		if t, ok := row.PreColumns[cid].Value.(json.Number); ok {
 			if i, err := t.Int64(); err == nil {
-				mvHandler.handlers[0].retract(Value(i))
+				mvHandler.handlers[cid].retract(Value(i))
 			}
-		} else {
-			fmt.Println("not a json number, crawl!")
 		}
 	}
-	if row.Columns != nil {
-		if t, ok := row.Columns[0].Value.(json.Number); ok {
+	for cid := range row.Columns {
+		if t, ok := row.Columns[cid].Value.(json.Number); ok {
 			if i, err := t.Int64(); err == nil {
-				mvHandler.handlers[0].insert(Value(i))
+				mvHandler.handlers[cid].insert(Value(i))
 			}
-		} else {
-			fmt.Println("not a json number, crawl!")
 		}
 	}
-	fmt.Printf("value in this time: %v\n", mvHandler.handlers[0].getSum())
-	return []Value{mvHandler.handlers[0].getSum()}
+	//if row.PreColumns != nil {
+	//	if t, ok := row.PreColumns[0].Value.(json.Number); ok {
+	//		if i, err := t.Int64(); err == nil {
+	//			mvHandler.handlers[0].retract(Value(i))
+	//		}
+	//	}
+	//}
+	//if row.Columns != nil {
+	//	if t, ok := row.Columns[0].Value.(json.Number); ok {
+	//		if i, err := t.Int64(); err == nil {
+	//			mvHandler.handlers[0].insert(Value(i))
+	//		}
+	//	}
+	//}
+	//fmt.Printf("value in this time: %v\n", mvHandler.handlers[0].getSum())
+	return []Value{mvHandler.handlers[0].getSum(), mvHandler.handlers[1].getMax(), mvHandler.handlers[2].getDistinctCount()}
 }

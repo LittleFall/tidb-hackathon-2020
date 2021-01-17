@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/google/btree"
@@ -23,7 +24,7 @@ type PreAggregateMVCC struct {
 	results    *btree.BTree
 	resolvedTs uint64
 	chans      []struct {
-		ch chan *Value
+		ch chan []Value
 		ts uint64
 	}
 }
@@ -35,13 +36,13 @@ func NewPreAggregateMVCC() *PreAggregateMVCC {
 	}
 }
 
-func (m *PreAggregateMVCC) FindValue(readTs uint64) chan *Value {
+func (m *PreAggregateMVCC) FindValue(readTs uint64) chan []Value {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	ch := make(chan *Value, 1)
+	ch := make(chan []Value, 1)
 	if readTs > m.resolvedTs {
 		m.chans = append(m.chans, struct {
-			ch chan *Value
+			ch chan []Value
 			ts uint64
 		}{
 			ch,
@@ -49,7 +50,7 @@ func (m *PreAggregateMVCC) FindValue(readTs uint64) chan *Value {
 		})
 		return ch
 	}
-	var v *Value
+	var v []Value
 	v = nil
 	m.results.DescendLessOrEqual(&PreAggregateResult{
 		ts: readTs,
@@ -57,7 +58,7 @@ func (m *PreAggregateMVCC) FindValue(readTs uint64) chan *Value {
 		func(a btree.Item) bool {
 			res := a.(*PreAggregateResult)
 			if res.ts < readTs {
-				*v = res.v
+				v = res.vs
 				return false
 			}
 			return true
@@ -93,7 +94,7 @@ func (m *PreAggregateMVCC) UpdateResolveTs(resolvedTs uint64) {
 		if m.resolvedTs < s.ts {
 			continue
 		}
-		var v *Value
+		var v []Value
 		v = nil
 		m.results.DescendLessOrEqual(&PreAggregateResult{
 			ts: s.ts,
@@ -101,7 +102,7 @@ func (m *PreAggregateMVCC) UpdateResolveTs(resolvedTs uint64) {
 			func(a btree.Item) bool {
 				res := a.(*PreAggregateResult)
 				if res.ts < s.ts {
-					*v = res.v
+					v = res.vs
 					return false
 				}
 				return true
@@ -129,6 +130,11 @@ func NewPreAggregate(preaggMVCC *PreAggregateMVCC, handler AggregateHandler) *Pr
 
 func (p *PreAggregate) rowChange(row *model.RowChangedEvent) {
 	vs := p.handler.OnRowChanged(row)
+	fmt.Printf("CommitTs: %v: ( ", row.CommitTs)
+	for _, v := range vs {
+		fmt.Printf("%d ", v)
+	}
+	fmt.Printf(")\n")
 
 	p.preaggMVCC.AddValue(&PreAggregateResult{
 		ts: row.CommitTs,
